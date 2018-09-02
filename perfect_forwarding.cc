@@ -1,66 +1,48 @@
-#include <cstdlib>
-#include <cxxabi.h>
 #include <iostream>
-#include <memory>
 #include <string>
-#include <type_traits>
-#include <typeinfo>
 
-template <class T>
-std::string type_name()
-{
-  typedef typename std::remove_reference<T>::type TR;
-  std::unique_ptr<char, void (*)(void*)> own(
-      abi::__cxa_demangle(typeid(TR).name(), nullptr, nullptr, nullptr),
-      std::free);
-  std::string r = own != nullptr ? own.get() : typeid(TR).name();
-  if (std::is_const<TR>::value) r += " const";
-  if (std::is_volatile<TR>::value) r += " volatile";
-  if (std::is_lvalue_reference<T>::value)
-    r += "&";
-  else if (std::is_rvalue_reference<T>::value)
-    r += "&&";
-  return r;
-}
-
-class Widget
+class X
 {
  public:
   template <typename T>
   void setName(T&& newName)
   {
-    std::cout << "setName(" << type_name<T>() << " && newName)" << std::endl;
-    //std::string name = std::forward<T>(newName);
-    std::string name = std::move(newName);
+    std::cout << "y.setName by forwarding" << std::endl;
+    m_name = std::forward<T>(newName);
   }
+  std::string& getName() { return m_name; }
+ private:
+  std::string m_name;
 };
 
-class X
+class Y
 {
  public:
-  X() {}
-  // copy constructor.
-  X(const X& other)
+  template <typename T>
+  void setName(T&& newName)
   {
-    std::cout << "X's copy constructor [X(const X& other)]" << std::endl;
+    std::cout << "y.setName by moving" << std::endl;
+    m_name = std::move(newName);
   }
-  // move constructor.
-  X(X&& other)
-  {
-    std::cout << "X's move constructor [X(const X&& other)]" << std::endl;
-  }
+  std::string& getName() { return m_name; }
+ private:
+  std::string m_name;
 };
 
 int main()
 {
-  Widget w;
-  std::string name("foo");
-  w.setName(name);
-  w.setName(std::string("spam"));
-  std::cout << name << std::endl;
-  std::cout << "--" << std::endl;
-  //w.setName(X());
   X x;
-  //w.setName(x);
+  std::string name("foo");
+  std::cout << "name = " << name << std::endl;
+  x.setName(name);
+  std::cout << "x.name = " << x.getName() << std::endl;
+  std::cout << "name = " << name << std::endl;
+  std::cout << "--" << std::endl;
+  Y y;
+  std::cout << "name = " << name << std::endl;
+  y.setName(name);
+  std::cout << "y.name = " << y.getName() << std::endl;
+  // name is gone.
+  std::cout << "name = " << name << std::endl;
   return 0;
 }
