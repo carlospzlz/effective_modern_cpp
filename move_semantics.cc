@@ -14,7 +14,7 @@ class Foo
     std::cout << "Constructed Foo with copy constructor at " << this
               << std::endl;
   }
-  Foo(const Foo&& other)
+  Foo(Foo&& other)
   {
     std::cout << "Constructed Foo with move constructor at " << this
               << std::endl;
@@ -73,6 +73,11 @@ int main()
   Foo foo {9};
   // doSomething(foo); // error: cannot bind rvalue reference to lvalue
   doSomething(Foo(11)); // surprise, suprise
+  std::cout << "--" << std::endl;
+
+  // wtf?
+  const Foo a {13};
+  Foo b = std::move(a);
 
   return 0;
 }
